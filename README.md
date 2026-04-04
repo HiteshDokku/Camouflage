@@ -1,66 +1,74 @@
-# Camouflage - Steganography App
+# 🕵️‍♂️ Camouflage - Full-Stack Steganography App
 
-Camouflage is a full-stack application that wraps a Python steganography logic library. It supports encoding and decoding secret messages within images, audio, and video files.
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![Vite](https://img.shields.io/badge/Vite-B73BFE?style=for-the-badge&logo=vite&logoColor=FFD62E)](https://vitejs.dev/)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 
-## Project Structure
-- `backend/` - Flask API that uses the existing python repository
-- `backend/stego_adapter.py` - Custom wrapper logic that adapts the original repo's CLI functionality seamlessly via callable endpoints.
-- `frontend/` - React frontend built with Vite and Bootstrap
+Camouflage is a full-stack web application that allows you to securely hide secret text messages or files inside everyday media formats like **Images (PNG), Audio (WAV), and Video (AVI)**. 
 
-## Prerequisites
-- **Node.js**: (Version 16+)
-- **Python**: (Version 3.8+)
-- **FFmpeg**: Required for audio/video processing. Install via `apt install ffmpeg` or download for Windows.
+Built with a React frontend and a Python/Flask backend, it leverages Least Significant Bit (LSB) steganography with pseudo-random bit shuffling and optional AES-GCM payload encryption to ensure your hidden data remains completely undetectable and secure.
 
-## Quickstart (Local Development)
+---
 
-### Quick Note on Processing
-> **Processing Time for Large Files**: While image and audio modifications are generally fast, processing Video files (especially higher resolutions or larger files) involves unzipping and modifying individual frames heavily via NumPy. **Please note that large videos may take considerable time to complete processing synchronously**. The UI employs a progress spinner outlining these scenarios.
+## ✨ Features
 
+- **🖼️ Multi-Media Support:** Hide data inside Images, Audio files, and Video streams.
+- **🔒 Secure Password Seeding:** Uses your password to seed a pseudo-random bit-shuffling algorithm. The data is scattered across the file, making it impossible to extract without the exact password.
+- **🛡️ AES-GCM Encryption:** Optional military-grade encryption encrypts the payload before it is even embedded into the media.
+- **📁 File & Text Payloads:** Hide plain text messages or upload entire files (PDFs, ZIPs, etc.) inside the cover media.
+- **⚙️ 100% Transparent Abstraction:** No need to manage clumsy 'key files'. The payload size and shuffle mappings are handled dynamically and seamlessly via a custom 8-byte header sequence.
+- **🐳 Docker Ready:** Instantly deploy the entire stack using `docker-compose`.
+
+---
+
+## 🏗️ System Architecture
+
+The project is divided into a decoupled Frontend and Backend, communicating via RESTful APIs.
+
+1. **Frontend (React + Vite):** Provides an intuitive, responsive UI with separate tabs for Encoding and Decoding. It handles file staging and binary blob downloads.
+2. **Backend API (Flask):** Exposes `/api/encode` and `/api/decode`. Manages temporary file saving and routes data to the Stego Adapter.
+3. **Stego Adapter (`stego_adapter.py`):** The mastermind wrapper. It prepends binary length headers, performs AES encryption using `cryptography`, and generates deterministic shuffle dictionaries based on the user's password.
+4. **Core Steganography Engine:** Operates directly on bytes. Modifies the Least Significant Bits (LSB) of RGB channels (via `OpenCV`) or Audio frames (via `SciPy`).
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+* **React 18** (UI Library)
+* **Vite** (Build Tool)
+* **Bootstrap 5** (Styling)
+* **Axios** (API Client)
+
+### Backend
+* **Python 3.11+**
+* **Flask** & **Gunicorn** (Web Server)
+* **OpenCV** (`cv2`) & **NumPy** (Image & Video processing)
+* **SciPy** (WAV Audio processing)
+* **Cryptography** (AES-GCM & PBKDF2HMAC)
+
+---
+
+## 🚀 Getting Started (Local Development)
+
+### Prerequisites
+- **Node.js**: (Version 18+)
+- **Python**: (Version 3.11+)
+- **FFmpeg**: Required for backend audio/video stream copying. *(Install via `sudo apt install ffmpeg` on Linux or via Homebrew on Mac)*
+
+### 1. Start the Python Backend
+Open a terminal and navigate to the `backend` directory:
 ```bash
 cd backend
+
+# Create and activate a virtual environment
 python -m venv venv
-# Windows:
-venv\Scripts\activate
-# Linux/Mac:
-source venv/bin/activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 
+# Install dependencies
 pip install -r requirements.txt
+
+# Run the Flask development server
 python app.py
-```
-The server will start on `http://127.0.0.1:5000`
-
-### 2. Start the Frontend
-```bash
-cd frontend
-npm install
-npm run dev
-```
-Open the provided local URL (usually `http://localhost:5173`)
-
-## API Endpoints
-- `POST /api/encode` - Accepts `multipart/form-data` with `cover`, `secret_text` or `secret_file`, etc. Returns file attachment directly.
-- `POST /api/decode` - Accepts `stego` file and `secret_key` string. Returns extracted text JSON or file download attachment.
-
-### Curl Examples
-
-**Encode:**
-```bash
-curl -F "media_type=image" -F "cover=@your_image.png" -F "secret_text=hello world" -F "secret_key=mykey" -F "output_name=secret_img" http://localhost:5000/api/encode --output secret_img.png
-```
-
-**Decode:**
-```bash
-curl -F "media_type=image" -F "stego=@secret_img.png" -F "secret_key=mykey" http://localhost:5000/api/decode
-```
-
-## Docker Deployment
-We provide a `docker-compose` orchestration mapping combining the Python/Gunicorn Backend cluster and Nginx/React load-balanced Frontend proxy: 
-```bash
-docker-compose up --build
-```
-Then visit `http://localhost:80` (or `http://localhost`) to view your app.
-
-## Architecture overview
-The backend relies on `image_module`, `audio`, and `video` folders directly extracted from `rafaeloliveira00/Steganography`.
-Because the algorithm generates a pseudo-random mapping dictionary during basic encoding based on random selections and file sizes, my wrapper automatically seeds the random generator utilizing your user-given password `key`. It implicitly tracks your file payload size metadata dynamically by embedding a binary bit header sequence inside the payload message directly, creating a truly 100% transparent API abstraction allowing you full encoding/decoding access via only a password.
