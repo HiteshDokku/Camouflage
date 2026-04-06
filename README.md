@@ -91,7 +91,7 @@ The frontend will be available at http://localhost:5173
 
 ⚠️ Note on Video Processing: Encoding/Decoding large video files relies heavily on extracting and modifying individual frames via NumPy. This is a CPU-intensive task and may take considerable time depending on the file size.
 
-###🐳 Docker Deployment
+### 🐳 Docker Deployment
 The easiest way to spin up the entire application (Nginx Load Balancer + React Frontend + Gunicorn Flask Backend) is using Docker Compose.
 ```bash
 # From the root of the project
@@ -99,7 +99,7 @@ docker-compose up --build -d
 ```
 Once built, navigate to http://localhost in your browser.
 
-###📡 API Reference
+### 📡 API Reference
 You can bypass the UI and use the backend directly via cURL or Postman.
 
 Encode Media
@@ -120,7 +120,7 @@ curl -F "media_type=image" \
      -F "secret_key=MyStrongPassword" \
      http://localhost:5000/api/decode
 ```
-###🧪 Testing
+### 🧪 Testing
 The backend includes a suite of unit and acceptance tests covering image, audio, and video encoding workflows.
 ```bash
 cd backend
